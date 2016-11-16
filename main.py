@@ -1,6 +1,7 @@
 import numpy as np
 import cv2, os, subprocess, math
 from matplotlib import pyplot as plt
+from itertools import chain
 
 # https://github.com/danvk/oldnyc/blob/master/ocr/tess/crop_morphology.py
 
@@ -28,6 +29,45 @@ abs_grad_y = cv2.convertScaleAbs(grad_y)
 
 dst = cv2.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
 img_bin = cv2.threshold(dst.copy(), 127, 255, cv2.THRESH_OTSU)[1]
+
+# cv2.RETR_EXTERNAL cv2.RETR_TREE
+_, contours, hierarchy = cv2.findContours((img_bin.copy()), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+print(len(contours))
+lala_all = []
+for cnt in contours:
+    # print(cnt)
+    approx_area = cv2.contourArea(cnt)
+    if approx_area > 10:
+        x, y, w, h = cv2.boundingRect(cnt)
+        cv2.rectangle(img_origin, (x,y), (x+w,y+h), (0, 255, 0), 2)
+
+        # histograms http://docs.opencv.org/2.4/modules/imgproc/doc/histograms.html
+        lala = img_origin[y:y+h, x:x+w]
+        lala = cv2.cvtColor(lala, cv2.COLOR_BGR2HSV)
+        lala_colors = lala[:,:,2]
+        lala_colors = ( list(chain.from_iterable(lala_colors)) )
+        lala_all += lala_colors
+        # hist_lala = cv2.calcHist([lala], [2], None, [256], [0,256])
+        # # print cv2.GetMinMaxHistValue(hist_lala)[1]
+        # if hist_all is None:
+        #     hist_all = hist_lala
+        # else:
+        #     hist_all = hist_all + hist_lala
+        # print(hist_lala)
+        # exit()
+
+ccc = dict((x, lala_all.count(x)) for x in lala_all)
+print( sorted(ccc.items(), key=lambda x: x[1], reverse=True))
+most_color = sorted(ccc.items(), key=lambda x: x[1], reverse=True)[0][0]
+print(most_color)
+
+    # approx = cv2.approxPolyDP(cnt, 0.1*cv2.arcLength(cnt, True), True)
+    # approx_area = cv2.contourArea(approx)
+    # x_cnt, y_cnt, w_cnt, h_cnt = cv2.boundingRect(approx)
+    #
+    # if approx_area > 2048 and np.float32(w_cnt)/np.float32(h_cnt)>0.7 and np.float32(w_cnt)/np.float32(h_cnt)<1.4:
+    #     cv2.drawContours( img_origin, [cnt], -1, (0,0,255), 1)
+    #     rect = cv2.minAreaRect(approx)
 
 # img_bin = cv2.morphologyEx(img_bin, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
 
