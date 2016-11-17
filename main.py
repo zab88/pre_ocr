@@ -2,10 +2,11 @@ import numpy as np
 import cv2, os, subprocess, math
 from matplotlib import pyplot as plt
 from itertools import chain
+import helpers as hh
 
 # https://github.com/danvk/oldnyc/blob/master/ocr/tess/crop_morphology.py
 
-file = 'img/c2.JPG'
+file = 'img/a1.JPG'
 
 img_origin = cv2.imread(file)
 img_blur = cv2.GaussianBlur(img_origin.copy(), (3, 3), 0)
@@ -30,36 +31,12 @@ abs_grad_y = cv2.convertScaleAbs(grad_y)
 dst = cv2.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
 img_bin = cv2.threshold(dst.copy(), 127, 255, cv2.THRESH_OTSU)[1]
 
-# cv2.RETR_EXTERNAL cv2.RETR_TREE
-_, contours, hierarchy = cv2.findContours((img_bin.copy()), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-print(len(contours))
-lala_all = []
-for cnt in contours:
-    # print(cnt)
-    approx_area = cv2.contourArea(cnt)
-    if approx_area > 10:
-        x, y, w, h = cv2.boundingRect(cnt)
-        cv2.rectangle(img_origin, (x,y), (x+w,y+h), (0, 255, 0), 2)
-
-        # histograms http://docs.opencv.org/2.4/modules/imgproc/doc/histograms.html
-        lala = img_origin[y:y+h, x:x+w]
-        lala = cv2.cvtColor(lala, cv2.COLOR_BGR2HSV)
-        lala_colors = lala[:,:,2]
-        lala_colors = ( list(chain.from_iterable(lala_colors)) )
-        lala_all += lala_colors
-        # hist_lala = cv2.calcHist([lala], [2], None, [256], [0,256])
-        # # print cv2.GetMinMaxHistValue(hist_lala)[1]
-        # if hist_all is None:
-        #     hist_all = hist_lala
-        # else:
-        #     hist_all = hist_all + hist_lala
-        # print(hist_lala)
-        # exit()
-
-ccc = dict((x, lala_all.count(x)) for x in lala_all)
-print( sorted(ccc.items(), key=lambda x: x[1], reverse=True))
-most_color = sorted(ccc.items(), key=lambda x: x[1], reverse=True)[0][0]
-print(most_color)
+lines_offset = hh.get_crop_tuples(img_bin, 0)
+lines_img = []
+for o in lines_offset:
+    # lines_img.append(img_origin[o[0]:o[1], : ])
+    lines_img.append(img_origin[ : , o[0]:o[1]])
+    cv2.imshow('asdf'+str(o[0]), lines_img[-1])
 
     # approx = cv2.approxPolyDP(cnt, 0.1*cv2.arcLength(cnt, True), True)
     # approx_area = cv2.contourArea(approx)
@@ -94,8 +71,11 @@ print(most_color)
 # select box
 #img_bin = cv2.threshold(img_cropped, 127, 255, cv2.THRESH_OTSU)[1]
 
-lower = np.array([0, 0, 205])
-upper = np.array([255, 255, 255])
+# most_color = hh.get_color_by_mask(img_origin, img_bin)
+most_color = 255
+color_threshold = 25
+lower = np.array([0, 0, max(0, most_color-25)])
+upper = np.array([255, 255, min(255, most_color+25)])
 hsv = cv2.cvtColor(img_origin.copy(), cv2.COLOR_BGR2HSV)
 mask = cv2.inRange(hsv, lower, upper)
 
@@ -108,7 +88,7 @@ cv2.imshow("Image origin", img_origin)
 # cv2.imshow("Y", sobely)
 cv2.imshow("DST", dst)
 cv2.imshow("bin", img_bin)
-cv2.imshow("mask", mask)
+# cv2.imshow("mask", mask)
 cv2.imshow("mask_inverted", (255-mask))
 # cv2.imshow("hsv", hsv)
 

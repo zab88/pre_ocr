@@ -27,7 +27,7 @@ def captch_ex(file_name ):
             continue
 
         # draw rectangle around contour on original image
-        cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,255),2)
+        cv2.rectangle(img, (x,y),(x+w,y+h),(255,0,255),2)
 
         '''
         #you can crop image and send to OCR  , false detected will return no text :)
