@@ -26,13 +26,14 @@ def onmouse(event, x, y, flags, param):
         selected_color_HSV = cv2.cvtColor(cut, cv2.COLOR_BGR2HSV)
         print(selected_color_HSV)
 
-frame = cv2.imread('img/c2.JPG')
+frame = cv2.imread('img/a1.JPG')
 frame = cv2.pyrUp(frame)
+image_origin = frame.copy()
 while(1):
 
     # Take each frame
     # _, frame = cap.read()
-    image_origin = frame.copy()
+    # image_origin = frame.copy()
 
 
     #drawing selected colors
@@ -46,5 +47,5 @@ while(1):
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
         break
-    time.sleep(0.1)
+    time.sleep(0.4)
 cv2.destroyAllWindows()

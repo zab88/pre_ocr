@@ -5,6 +5,9 @@ from itertools import chain
 import helpers as hh
 
 # https://github.com/danvk/oldnyc/blob/master/ocr/tess/crop_morphology.py
+timeline = hh.Timeline('movie_01/*.png')
+timeline.overview()
+exit()
 
 file = 'img/a1.JPG'
 
@@ -28,7 +31,7 @@ grad_y = cv2.Sobel(img_grey.copy(), ddepth,0,1,ksize = 3, scale = scale, delta =
 abs_grad_x = cv2.convertScaleAbs(grad_x)   # converting back to uint8
 abs_grad_y = cv2.convertScaleAbs(grad_y)
 
-dst = cv2.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
+dst = cv2.addWeighted(abs_grad_x, 0.8, abs_grad_y, 0.2, 0)
 img_bin = cv2.threshold(dst.copy(), 127, 255, cv2.THRESH_OTSU)[1]
 
 lines_offset = hh.get_crop_tuples(img_bin, 0)
@@ -72,10 +75,10 @@ for o in lines_offset:
 #img_bin = cv2.threshold(img_cropped, 127, 255, cv2.THRESH_OTSU)[1]
 
 # most_color = hh.get_color_by_mask(img_origin, img_bin)
-most_color = 255
-color_threshold = 25
-lower = np.array([0, 0, max(0, most_color-25)])
-upper = np.array([255, 255, min(255, most_color+25)])
+most_color = 210
+color_threshold = 45
+lower = np.array([0, 0, max(0, most_color-color_threshold)])
+upper = np.array([250, 250, min(255, most_color+color_threshold)])
 hsv = cv2.cvtColor(img_origin.copy(), cv2.COLOR_BGR2HSV)
 mask = cv2.inRange(hsv, lower, upper)
 
