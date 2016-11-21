@@ -9,10 +9,13 @@ import helpers as hh
 # cleaning tmp directory
 for f_remove in glob.glob("tmp/*.png"):
     os.remove(f_remove)
+for f_remove in glob.glob("tmp2/*.png"):
+    os.remove(f_remove)
 timeline = hh.Timeline('movie_02/*.png')
 # timeline.overview()
 # timeline.count_font_height()
-timeline.get_tail_edges()
+# timeline.get_tail_edges()
+timeline.create_sid_canny()
 exit()
 
 file = 'img/a1.JPG'

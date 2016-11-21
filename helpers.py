@@ -148,3 +148,50 @@ class Timeline():
 
             current_dir = os.path.dirname(os.path.realpath(__file__))
             cv2.imwrite(current_dir + os.sep + 'tmp' + os.sep +'!!'+str(i)+'.png', current_tail)
+    def create_sid_canny(self):
+        current_sid = 0
+        current_tail = None
+        current_len = 0
+        prev_bin = None
+        th_max, th_min = 1000, 50
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        for frame_number, f in enumerate(self.frames):
+            img_grey = cv2.imread(f.path_to_file, 0)
+            img_bin = cv2.Canny(img_grey, 100, 200)
+
+            if prev_bin is None:
+                prev_bin = img_bin.copy()
+                current_tail = img_bin.copy()
+                f.sid = current_sid
+                continue
+
+            th_counted = cv2.countNonZero(np.bitwise_xor(img_bin, prev_bin))
+            if (th_counted > th_max) or (len(self.frames)-1 == frame_number):
+                print(current_sid, f.name, th_counted)
+                # cv2.imshow('xor', np.bitwise_xor(img_bin, prev_bin))
+                # cv2.imshow('tail', current_tail)
+                # cv2.waitKey(0)
+                if current_len > 5:
+                    cv2.imwrite(current_dir + os.sep + 'tmp2' + os.sep + f.name, (current_tail))
+
+                current_sid += 1
+                current_tail = img_bin.copy()
+                current_len = 0
+            else:
+                current_tail = np.bitwise_and(current_tail, img_bin)
+                current_len += 1
+                if cv2.countNonZero(current_tail) < th_min:
+                    current_tail = img_bin.copy()
+                    current_len = 0
+
+            f.sid = current_sid
+            prev_bin = img_bin.copy()
+
+            # cv2.imshow('now', img_bin)
+            # cv2.imshow('tail', current_tail)
+            # cv2.imshow('bitwise_or', np.bitwise_or(img_bin, current_tail))
+            # cv2.imshow('bitwise_and', np.bitwise_and(img_bin, current_tail))
+            # cv2.imshow('bitwise_xor', np.bitwise_xor(img_bin, current_tail))
+            # cv2.imshow('and and', np.left_shift(img_bin, current_tail))
+            # cv2.waitKey(0)
+
