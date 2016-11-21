@@ -1,4 +1,4 @@
-import cv2, itertools, os
+import cv2, itertools, os, math
 import numpy as np
 from itertools import chain
 from glob import glob
@@ -68,11 +68,14 @@ def get_crop_tuples(mask, axis, threshold=20, border=4):
     return out
 
 class Frame():
+    current_sid = 0
     def __init__(self, img):
         _, img_file_name = os.path.split(img)
         self.name = img_file_name
         self.time = img[-15:-4]
         self.is_new = False
+        self.path_to_file = img
+        self.sid = Frame.current_sid
         img_origin = cv2.imread(img)
         img_grey = cv2.cvtColor(img_origin, cv2.COLOR_BGR2GRAY)
         # grad_x = cv2.Sobel(img_grey.copy(), cv2.CV_16S, 1, 0, ksize=3, scale=1, delta=0, borderType = cv2.BORDER_DEFAULT)
@@ -83,10 +86,11 @@ class Frame():
         #
         # dst = cv2.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
         # img_bin = cv2.threshold(dst.copy(), 127, 255, cv2.THRESH_OTSU)[1]
-
         img_bin = cv2.Canny(img_grey, 100, 200)
+        # cv2.imshow('ggg', img_bin)
+        # cv2.waitKey(0)
         height, width = img_bin.shape[:2]
-        self.lines_offset = get_crop_tuples(img_bin, 1, Timeline.font_height)
+        self.lines_offset = get_crop_tuples(img_bin, 0, Timeline.font_height)
 
         # compare with previous
         if Timeline.last_img is not None:
@@ -98,8 +102,11 @@ class Frame():
             # print(current_dir + os.sep + 'tmp' + os.sep + self.name)
             non_zero = cv2.countNonZero(fgmask)
             if non_zero > height*width*0.01:
+            # if True:
                 self.is_new = True
                 cv2.imwrite(current_dir + os.sep + 'tmp' + os.sep + self.name, (255-fgmask))
+                Frame.current_sid += 1
+                self.sid = Frame.current_sid
             # cv2.imshow('frame', fgmask)
             # cv2.waitKey(0)
 
@@ -107,6 +114,7 @@ class Frame():
 
 class Timeline():
     font_height = 40
+    font_height_calc = 0
     last_img = None
     def __init__(self, dir):
         self.dir = dir
@@ -122,3 +130,21 @@ class Timeline():
             else:
                 print(f.lines_offset)
 
+    def count_font_height(self):
+        # all_tuples = [t[1]-t[0] for f in f.lines_offset for f in self.frames]
+        all_tuples = [t[1]-t[0] for f in self.frames for t in f.lines_offset ]
+        print(all_tuples)
+        print( np.mean(all_tuples) )
+
+    def get_tail_edges(self, tail=10):
+        for i in range(0, len(self.frames)-tail, 1):
+            current_tail = None
+            for j in range(0, tail, 1):
+                img_grey = cv2.imread(self.frames[i+j].path_to_file, 0)
+                img_bin = cv2.Canny(img_grey, 100, 200)
+                if current_tail is None:
+                    current_tail = img_bin.copy()
+                current_tail = np.bitwise_and(current_tail, img_bin)
+
+            current_dir = os.path.dirname(os.path.realpath(__file__))
+            cv2.imwrite(current_dir + os.sep + 'tmp' + os.sep +'!!'+str(i)+'.png', current_tail)
