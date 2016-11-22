@@ -173,6 +173,13 @@ class Timeline():
                 # cv2.waitKey(0)
                 if current_len > 5:
                     cv2.imwrite(current_dir + os.sep + 'tmp2' + os.sep + f.name, (current_tail))
+                    # lets' add color !
+                    img_bgr = cv2.imread(self.frames[frame_number-1].path_to_file)
+                    mask_color = Timeline.get_color_mask(img_bgr)
+                    kernel_3 = np.ones((3, 3), np.uint8)
+                    dilation = cv2.dilate(current_tail, kernel_3)
+                    wow = np.bitwise_and(dilation, mask_color)
+                    cv2.imwrite(current_dir + os.sep + 'tmp2' + os.sep +'_'+ f.name, (255-wow))
 
                 current_sid += 1
                 current_tail = img_bin.copy()
@@ -195,3 +202,12 @@ class Timeline():
             # cv2.imshow('and and', np.left_shift(img_bin, current_tail))
             # cv2.waitKey(0)
 
+    @staticmethod
+    def get_color_mask(img_bgr):
+        most_color = 230
+        color_threshold = 25
+        lower = np.array([0, 0, max(0, most_color-color_threshold)])
+        upper = np.array([250, 250, min(255, most_color+color_threshold)])
+        hsv = cv2.cvtColor(img_bgr.copy(), cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv, lower, upper)
+        return mask
