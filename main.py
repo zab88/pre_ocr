@@ -11,11 +11,12 @@ for f_remove in glob.glob("tmp/*.png"):
     os.remove(f_remove)
 for f_remove in glob.glob("tmp2/*.png"):
     os.remove(f_remove)
-timeline = hh.Timeline('movie_02/*.png')
+# timeline = hh.Timeline('movie_02/*.png')
 # timeline.overview()
 # timeline.count_font_height()
 # timeline.get_tail_edges()
-timeline.create_sid_canny()
+# timeline.create_sid_canny()
+hh.FromVideo.create_sid_canny()
 exit()
 
 file = 'img/a1.JPG'

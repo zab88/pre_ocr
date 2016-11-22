@@ -211,3 +211,65 @@ class Timeline():
         hsv = cv2.cvtColor(img_bgr.copy(), cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, lower, upper)
         return mask
+
+class FromVideo():
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def create_sid_canny():
+        current_sid = 0
+        current_tail = None
+        current_len = 0
+        prev_bin = None
+        prev_color = None
+        th_max, th_min = 1000, 50
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        frame_number = 0
+
+        cap = cv2.VideoCapture('movies/LanLing26.mp4')
+        while(cap.isOpened()):
+            ret, frame = cap.read()
+            frame = frame[418:454, 76:776]
+            frame_number += 1
+
+            img_grey = cv2.cvtColor(frame.copy(), cv2.COLOR_BGR2GRAY)
+            img_bin = cv2.Canny(img_grey, 100, 200)
+
+            if prev_bin is None:
+                prev_bin = img_bin.copy()
+                prev_color = frame.copy()
+                current_tail = img_bin.copy()
+                continue
+
+            th_counted = cv2.countNonZero(np.bitwise_xor(img_bin, prev_bin))
+            if (th_counted > th_max):
+                print(frame_number, th_counted)
+                if current_len > 8:
+                    #cv2.imwrite(current_dir + os.sep + 'tmp2' + os.sep + frame_number+'.png', (current_tail))
+                    # lets' add color !
+                    img_bgr = prev_color.copy()
+                    mask_color = Timeline.get_color_mask(img_bgr)
+                    kernel_3 = np.ones((3, 3), np.uint8)
+                    dilation = cv2.dilate(current_tail, kernel_3)
+                    wow = np.bitwise_and(dilation, mask_color)
+                    if cv2.countNonZero(wow) > (th_min*3 - 5):
+                        cv2.imwrite(current_dir + os.sep + 'tmp2' + os.sep +str(frame_number)+'.png', (255-wow))
+
+                current_sid += 1
+                current_tail = img_bin.copy()
+                current_len = 0
+            else:
+                current_tail = np.bitwise_and(current_tail, img_bin)
+                current_len += 1
+                if cv2.countNonZero(current_tail) < th_min:
+                    current_tail = img_bin.copy()
+                    current_len = 0
+
+            prev_bin = img_bin.copy()
+            prev_color = frame.copy()
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        cap.release()
