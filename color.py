@@ -1,7 +1,7 @@
 import cv2, time
 import cv2.cv as cv
 
-cap = cv2.VideoCapture(0)
+# cap = cv2.VideoCapture(0)
 
 #set camera width and height
 CAM_WIDTH = 640

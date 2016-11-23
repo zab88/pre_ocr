@@ -16,7 +16,7 @@ for f_remove in glob.glob("tmp2/*.png"):
 # timeline.count_font_height()
 # timeline.get_tail_edges()
 # timeline.create_sid_canny()
-hh.FromVideo.create_sid_canny()
+hh.FromVideo2.create_sid_canny()
 exit()
 
 file = 'img/a1.JPG'
