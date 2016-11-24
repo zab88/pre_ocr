@@ -282,26 +282,30 @@ class FromVideo2():
     def create_sid_canny():
         current_sid = 0
         current_tail = None
+        current_tail2 = None
         current_len = 0
         prev_bin = None
         prev_color = None
         th_max, th_min = 10000, 500
         current_dir = os.path.dirname(os.path.realpath(__file__))
         frame_number = 0
+        frame_number_start = 0
 
-        text_lower = np.array([0, 0, 130])
+        text_lower = np.array([0, 0, 125])
         text_upper = np.array([200, 200, 255])
         border_lower = np.array([0, 160, 0])
         border_upper = np.array([20, 255, 100])
+        # border_lower = np.array([0, 0, 0])
+        # border_upper = np.array([255, 255, 121])
 
         cap = cv2.VideoCapture('movies/Xiang35.mp4')
         while(cap.isOpened()):
             ret, frame = cap.read()
             frame = frame[340:460, 50:590]
             frame_number += 1
-            if frame_number < 3000:
+            if frame_number < 4800:
                 continue
-
+            # frame = cv2.blur(frame, (5, 5))
             # cv2.imshow('ggg', frame)
             # # cv2.waitKey(0)
             # if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -310,11 +314,13 @@ class FromVideo2():
 
             img_grey = cv2.cvtColor(frame.copy(), cv2.COLOR_BGR2GRAY)
             img_bin = cv2.Canny(img_grey, 100, 200)
+            img_bin2 = cv2.Canny(img_grey, 100, 300)
 
             if prev_bin is None:
                 prev_bin = img_bin.copy()
                 prev_color = frame.copy()
                 current_tail = img_bin.copy()
+                current_tail2 = img_bin2.copy()
                 hsv = cv2.cvtColor(frame.copy(), cv2.COLOR_BGR2HSV)
                 border_mask_tail = cv2.inRange(hsv, border_lower, border_upper)
                 text_mask_tail = cv2.inRange(hsv, text_lower, text_upper)
@@ -330,8 +336,28 @@ class FromVideo2():
 
             th_counted = cv2.countNonZero(fgmask)
             if (th_counted > th_max):
-                print(frame_number, th_counted)
+                print(frame_number_start, frame_number, th_counted)
                 if current_len > 8:
+                    # magic = cv2.subtract(text_mask_tail, border_mask_tail)
+                    # magic = cv2.copyMakeBorder(magic, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=(255))
+                    # cv2.floodFill(magic, None, (0, 0), (0))
+                    # cv2.imshow('asdf', magic)
+                    # cv2.waitKey(0)
+
+                    kernel_9 = np.ones((9, 9), np.uint8)
+                    super_board = cv2.add(border_mask_tail, current_tail2)
+                    perfect_board = np.bitwise_and(current_tail2, cv2.dilate(current_tail, kernel_9))
+                    perfect_board = cv2.copyMakeBorder(perfect_board, 2, 2, 2, 2, cv2.BORDER_CONSTANT, value=(0))
+                    cv2.floodFill(perfect_board, None, (0, 0), (255))
+                    cv2.imshow('board', border_mask_tail)
+                    cv2.imshow('edges', current_tail)
+                    cv2.imshow('edges2', current_tail2)
+                    cv2.imshow('super_board', super_board)
+                    cv2.imshow('perfect_board', perfect_board)
+                    cv2.imshow('fgmask', fgmask)
+                    cv2.imshow('text_mask_tail', text_mask_tail)
+                    cv2.waitKey(0)
+
                     #cv2.imwrite(current_dir + os.sep + 'tmp2' + os.sep + frame_number+'.png', (current_tail))
                     # lets' add color !
                     # img_bgr = prev_color.copy()
@@ -347,23 +373,29 @@ class FromVideo2():
                     if cv2.countNonZero(wow) > (th_min*3 - 5):
                         if cv2.countNonZero(wow) < 30000:
                             cv2.imwrite(current_dir + os.sep + 'tmp2' + os.sep +str(frame_number)+'.png', (255-wow))
-                            cv2.imwrite(current_dir + os.sep + 'tmp2' + os.sep +str(frame_number)+'lala.png', current_tail)
+                            cv2.imwrite(current_dir + os.sep + 'tmp2' + os.sep +str(frame_number)+'_text.png', text_mask_tail)
+                            cv2.imwrite(current_dir + os.sep + 'tmp2' + os.sep +str(frame_number)+'_super_board.png', super_board)
 
                 current_sid += 1
                 current_tail = img_bin.copy()
+                current_tail2 = img_bin2.copy()
                 text_mask_tail = text_mask
                 border_mask_tail = border_mask
                 current_len = 0
+                frame_number_start = frame_number
             else:
                 current_tail = np.bitwise_and(current_tail, img_bin)
+                current_tail2 = np.bitwise_or(current_tail, img_bin2)
                 text_mask_tail = np.bitwise_and(text_mask, text_mask_tail)
                 border_mask_tail = np.bitwise_or(border_mask, border_mask_tail)
                 current_len += 1
                 if cv2.countNonZero(text_mask_tail) < th_min:
                     current_tail = img_bin.copy()
+                    current_tail2 = img_bin2.copy()
                     current_len = 0
+                    frame_number_start = frame_number
 
-            prev_bin = img_bin.copy()
+            #prev_bin = img_bin.copy()
             prev_color = frame.copy()
 
             if cv2.waitKey(1) & 0xFF == ord('q'):

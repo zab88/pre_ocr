@@ -20,6 +20,7 @@ def onmouse(event, x, y, flags, param):
         cut = image_origin[y-1:y+2, x-1:x+2]
         cut = cv2.pyrDown(cut)
         cut = cv2.pyrDown(cut)
+        cut = image_origin[y:y+1, x:x+1]
 
         selected_color = (int(cut[0][0][0]), int(cut[0][0][1]), int(cut[0][0][2]))
         #conveting to HSV and printing result
