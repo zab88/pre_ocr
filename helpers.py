@@ -67,6 +67,18 @@ def get_crop_tuples(mask, axis, threshold=20, border=4):
     # print(out)
     return out
 
+def get_out_name(movie_name, frame_start, frame_end, fps):
+    start = int(float(frame_start)/fps)
+    end = int(float(frame_end)/fps)
+    start_h = start/3600
+    start_m = (start - start_h*3600)/60
+    start_s = start%60
+    end_h = end/3600
+    end_m = (end - end_h*3600)/60
+    end_s = end%60
+    out_name = '{:0>}-{}h{:0>2}m{:0>2}s-{}h{:0>2}m{:0>2}s.png'.format(movie_name, start_h, start_m, start_s, end_h, end_m, end_s)
+    return out_name
+
 class Frame():
     current_sid = 0
     def __init__(self, img):
@@ -299,8 +311,17 @@ class FromVideo2():
         # border_upper = np.array([255, 255, 121])
 
         cap = cv2.VideoCapture('movies/Xiang35.mp4')
+        fps = cap.get(5)
+        # for i in range(0, 18, 1):
+        #     print(cap.get(i))
+        # cap.release()
+        # exit()
         while(cap.isOpened()):
             ret, frame = cap.read()
+            if ret is False:
+                # video ended
+                print(frame_number)
+                break
             frame = frame[340:460, 50:590]
             frame_number += 1
             if frame_number < 4800:
@@ -372,7 +393,8 @@ class FromVideo2():
                     # wow = np.bitwise_and(dilation, mask_color)
                     if cv2.countNonZero(wow) > (th_min*3 - 5):
                         if cv2.countNonZero(wow) < 30000:
-                            cv2.imwrite(current_dir + os.sep + 'tmp2' + os.sep +str(frame_number)+'.png', (255-wow))
+                            cv2.imwrite(current_dir + os.sep + 'tmp2' + os.sep +
+                                        get_out_name('Xiang', frame_number_start, frame_number, fps), (255-wow))
                             cv2.imwrite(current_dir + os.sep + 'tmp2' + os.sep +str(frame_number)+'_text.png', text_mask_tail)
                             cv2.imwrite(current_dir + os.sep + 'tmp2' + os.sep +str(frame_number)+'_super_board.png', super_board)
 
